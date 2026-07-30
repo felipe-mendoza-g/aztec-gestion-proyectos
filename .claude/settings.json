@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(\"node: \" + \\(node -v\\); \"npm: \" + \\(npm -v\\); try { \"pnpm: \" + \\(pnpm -v\\) } catch { \"pnpm: NO INSTALADO\" }; \"git: \" + \\(git --version\\); \"corepack: \" + \\(Get-Command corepack -ErrorAction SilentlyContinue\\).Source)",
+      "mcp__claude_ai_Supabase__list_projects",
+      "mcp__claude_ai_Supabase__get_project_url",
+      "mcp__claude_ai_Supabase__get_publishable_keys",
+      "mcp__claude_ai_Supabase__get_cost",
+      "mcp__claude_ai_Supabase__confirm_cost",
+      "mcp__claude_ai_Supabase__create_project",
+      "PowerShell(npm install @supabase/supabase-js @supabase/ssr)"
+    ]
+  }
+}
