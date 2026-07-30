@@ -1019,6 +1019,13 @@ Las dos mitades del criterio de la tarea quedaron medidas: `curl` con la API key
 - **El prompt manda `projects` y `tasks` completos como JSON**, con instrucciones de responder solo con esos datos, de decir cuando no alcanzan, y de recorrer el array completo antes de responder listados. Sin librería de OpenAI (`fetch` directo a `/v1/chat/completions`): un solo endpoint no justifica una dependencia nueva.
 - **Un error de red o de la API de OpenAI devuelve un texto genérico** (`502`), sin el detalle técnico de la respuesta cruda — mismo criterio que `mensajeDeError` de `actions/common.ts`.
 
+**Novedad encontrada al desplegar (Tarea 8.2), resuelta y cerrada:** dos fallas encadenadas en producción, ninguna del código de esta tarea:
+
+1. Con la primera `OPENAI_API_KEY` puesta en Vercel, `POST /api/chat` devolvía `502`. El log de runtime mostraba la causa exacta: `OpenAI 401 invalid_api_key` — "Incorrect API key provided", la misma llave que en `.env.local` local. La llave en sí no era válida contra la API de OpenAI (revocada o mal copiada). Resuelto pegando una llave válida.
+2. Con la llave ya corregida, seguía devolviendo `502`, ahora con `OpenAI 400 "you must provide a model parameter"`. Causa: `OPENAI_MODEL` quedó cargada en Vercel **con valor vacío**, y `process.env.OPENAI_MODEL ?? 'gpt-4o-mini'` (7.2.a) solo usa el default cuando la variable está *ausente* — una cadena vacía no es `null`/`undefined`, así que `MODELO` terminó siendo `''`. Resuelto borrando la variable vacía en Vercel (ver `APRENDIZAJES.md` #22).
+
+Las dos veces el manejo de error de 7.2.a hizo lo que tenía que hacer — devolver un `502` limpio con el detalle en el log del servidor, sin romper la app — que es lo que permitió diagnosticar cada causa desde los logs de Vercel en vez de a ciegas. **Confirmado en logs de runtime:** `POST /api/chat` → `200` a las 12:46:43 (deployment `dpl_38NxXufTcEFXxFi2K9z32cDtE4pr`), sin errores de OpenAI.
+
 **Estado de la base al cerrar el nivel:** sin cambios — las dos tareas de este nivel solo leen. Ruta temporal de verificación borrada.
 
 ---
@@ -1049,15 +1056,27 @@ Las dos mitades del criterio de la tarea quedaron medidas: `curl` con la API key
 
 **Lo que no se pudo medir en este entorno**: el criterio literal de la tarea es clonar en una carpeta limpia y seguir *solo* el README. Sin una segunda máquina disponible acá, se verificó la mitad que sí se puede medir desde este repo (prueba A: que el README no omita ninguna variable real) en vez de simular el clon. Queda pendiente de confirmar en la práctica cuando Pipe (o el evaluador) siga los pasos del README desde cero.
 
-### Tarea 8.2: Deploy a Vercel — **Estatus: pendiente**
+### Tarea 8.2: Deploy a Vercel — **Estatus: hecha**
 **Archivos:** ninguno nuevo (configuración en la plataforma)
 
 **Depende de / produce:**
 - Consume: repo completo y funcional
-- Produce: URL pública (opcional para el video, no exigida por el reto; el repo clonable sí lo es)
+- Produce: URL pública (opcional para el video, no exigida por el reto; el repo clonable sí lo es): `https://aztec-gestion-proyectos.vercel.app`
 
 **Cómo verificar que quedó bien:**
 - URL de Vercel carga en incógnito, login funciona ahí también
 
-- [ ] 8.2.a Deploy único, sin CI/CD continuo
-- [ ] 8.2.b Variables de entorno configuradas en Vercel
+- [x] 8.2.a Deploy único, sin CI/CD continuo. Se hizo importando el repo de GitHub desde el dashboard de Vercel (proyecto `aztec-gestion-proyectos`, team `daniel-mendoza-s-projects`), no vía el CLI
+- [x] 8.2.b Variables de entorno configuradas en Vercel: las 6 de `.env.example` cargadas en Production
+
+**Resultado de la verificación** (**criterio de la tarea**: URL carga en incógnito, login funciona):
+
+| # | Prueba | Resultado |
+|---|---|---|
+| A | Primer build (commit `9c4b9e9`) | Falló: prerender de `/login` tira el error de `lib/supabase/server.ts` ("Faltan NEXT_PUBLIC_SUPABASE_URL o…") — esperado, las variables todavía no estaban puestas en Vercel |
+| B | Con las 6 variables cargadas y redeploy | Build en verde |
+| C | **Hallazgo, no anticipado:** el proyecto traía **Vercel Authentication (SSO)** activada por default en todos los dominios `*.vercel.app` (`ssoProtection.enabled: true, all_except_custom_domains`). Con eso, la URL pública redirigía a `vercel.com/sso-api` en vez de mostrar `/login` de la app — cualquiera sin acceso a la cuenta de Vercel quedaba afuera, que es exactamente lo contrario de "carga en incógnito" | Desactivada desde Settings → Deployment Protection (no se pudo por API: el token conectado devolvía `403 forbidden` al intentar `update_project_deployment_protection`) |
+| D | **URL en incógnito, después del fix** (**criterio de la tarea**) | `GET https://aztec-gestion-proyectos.vercel.app/` → `200`, HTML real de `/login` ("Entrar — Aztec", campos Usuario/Contraseña), sin la pantalla de Vercel. `get_project_deployment_protection` confirma `ssoProtection.enabled: false` |
+| E | Login (**criterio de la tarea, segunda mitad**) | Código sin cambios respecto al verificado en la Tarea 5.1; confirmado en producción por Pipe con `admin`/`123` (llegó a usar el chat widget, que solo se monta con sesión activa) |
+
+**Hallazgo de producción, no cubierto por el criterio de esta tarea pero descubierto al verificarla:** con la primera llave de `OPENAI_API_KEY` cargada, `POST /api/chat` devolvía `502` — el log de Vercel mostraba `OpenAI 401 invalid_api_key`, "Incorrect API key provided". La llave que había en `.env.local` no era válida contra la API de OpenAI (revocada o mal copiada). No bloquea el criterio de la 8.2 (no exige el chat funcionando), pero es una novedad sobre la Tarea 7.2, que había quedado "hecha" con una verificación local donde la llave sí respondía. Ver la nota agregada en la Tarea 7.2.
