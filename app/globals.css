@@ -1,26 +1,67 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* app/globals.css — Tarea 3.5 de TAREAS.md
+ *
+ * Único lugar donde viven los colores y la tipografía de marca. No hay
+ * `tailwind.config.ts` y no va a haberlo: Tailwind v4 se configura por CSS con
+ * `@theme`, y tener además un config JS dejaría dos lugares posibles para un
+ * mismo color (decidido con Pipe al cerrar la Tarea 1.4).
+ *
+ * Los valores salen de `docs/brand-guide.md` sección 3 y 4. No se inventan ni se
+ * ajustan "a ojo": si un color no está en el manual, no entra acá.
+ */
+
+/* ============================================================
+ * Paleta de marca — docs/brand-guide.md sección 3
+ *
+ * Ojo con los nombres: el manual llama "Primary" a un gris de apoyo, no al
+ * color del botón principal. El botón primario de la UI usa `bg-secondary`
+ * (#6EDD62), que es el verde de acento y llamadas a la acción. `bg-primary` es
+ * para elementos secundarios.
+ *
+ * `foreground` es el rol "Text" del manual. Se le dice foreground y no text
+ * porque `--color-text` generaría la utilidad `text-text`.
+ *
+ * `static` y no `@theme` a secas: Tailwind v4 descarta del CSS final las
+ * variables de tema que nadie usa todavía. Medido en un build de este repo con
+ * `@theme` normal, solo 2 de las 12 llegaron a `:root` — las otras 10 no
+ * existían para nadie que escribiera `var(--color-bloqueado)` en CSS crudo. Con
+ * `static` se emiten las 12 siempre, que es lo que pide 3.5.a.
+ * ============================================================ */
+@theme static {
+  --color-primary: #6b7280;
+  --color-secondary: #6edd62;
+  --color-accent: #0d3326;
+  --color-background: #f9f9f7;
+  --color-foreground: #0d3326;
+  --color-link: #0d3326;
+
+  /* ----------------------------------------------------------
+   * Colores de estado (3.5.c) — paleta semántica aparte, NO salen del manual
+   * de marca: el manual no tiene rojo ni ámbar, y su verde (#6EDD62) es el de
+   * las llamadas a la acción. Usarlo para `health = 'Sano'` haría que un
+   * proyecto sano se viera igual que un botón.
+   *
+   * Cada par es un color sólido (texto, borde, ícono) y su tinte suave (fondo
+   * del badge). Los tres sólidos pasan AA sobre `--color-background`: medido
+   * 6.3:1 el rojo, 5.2:1 el ámbar, 5.4:1 el verde.
+   * ---------------------------------------------------------- */
+  --color-bloqueado: #b42318;
+  --color-bloqueado-suave: #fef3f2;
+  --color-riesgo: #b54708;
+  --color-riesgo-suave: #fffaeb;
+  --color-sano: #067647;
+  --color-sano-suave: #ecfdf3;
 }
 
+/* Plus Jakarta Sans (3.5.b). Va en un bloque `inline` aparte porque referencia
+ * la variable que inyecta `next/font/google` desde `app/layout.tsx`. */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --font-sans: var(--font-plus-jakarta-sans);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+  font-family: var(--font-sans);
 }

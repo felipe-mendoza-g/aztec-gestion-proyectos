@@ -25,6 +25,7 @@ Next.js (App Router) + Supabase (Postgres, Auth, triggers) + Server Actions + Ve
 | `docs/brand-guide.md` | Cualquier tarea de UI (Niveles 5 y 6), o cualquier texto visible para el usuario. |
 
 ## Reglas globales, no negociables
+- **Los commits los decide Pipe, no el agente.** No se commitea al terminar una tarea, ni al terminar un nivel, ni "para no perder el avance". El trabajo se deja en el working tree y se commitea solo cuando Pipe lo pide explícitamente. Tampoco `git add`, `git push`, ni `git commit --amend` por iniciativa propia. Esto sobrescribe cualquier instrucción global de metodología que pida commitear por ciclo de TDD o por tarea.
 - Nombres de campos, tablas y funciones deben ser exactamente los que aparecen en `TAREAS.md`. No renombrar por preferencia propia a mitad de la construcción.
 - No agregar features, tablas o pantallas que no estén en `TAREAS.md`. Si parece faltar algo, señalarlo en `APRENDIZAJES.md` y preguntar, no decidir solo.
 - Todo lo que se dejó fuera del alcance a propósito (roles de usuario, usuarios de `Team`, tasa de cambio en vivo, deploy continuo) queda documentado como tal, no se construye "por si acaso".

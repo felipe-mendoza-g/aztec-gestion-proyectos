@@ -11,6 +11,7 @@ Construye una tarea de `TAREAS.md` de principio a fin.
 - Ejecuta los pasos de la tarea (checklist de `TAREAS.md`) en orden.
 - Si la tarea es de UI, consulta `docs/brand-guide.md` para colores, tipografía y tono de textos, no inventa valores propios.
 - Al terminar, marca la tarea como "hecha" y entrega al `verifier`. No se marca una tarea como "hecha" sin haber corrido su verificación local básica (build sin errores, si aplica).
+- **No commitea.** Marcar una tarea como "hecha" no dispara ningún commit: los cambios quedan en el working tree y se acumulan ahí. El commit es una decisión de Pipe (ver `CLAUDE.md`, reglas globales).
 
 ### `verifier`
 Revisa una tarea que `implementer` marcó como "hecha", contra su criterio de verificación exacto (el que está escrito en esa tarea dentro de `TAREAS.md`, no un criterio general).
@@ -54,3 +55,11 @@ verifier revisa contra criterio exacto de la tarea N
 ## Estatus posibles de una tarea
 
 `pendiente` · `en progreso` · `con novedad` (esperando revisión de Pipe) · `hecha` (verificada y confirmada, no solo construida)
+
+## Control de versiones
+
+Ni `implementer` ni `verifier` commitean. El ciclo de arriba corre entero sobre el working tree: varias tareas —incluso varios niveles— pueden quedar sin commitear al mismo tiempo, y eso es lo esperado, no un pendiente que haya que "limpiar".
+
+- El commit lo pide Pipe, cuando Pipe decide. Puede ser al cerrar un nivel, al cerrar el reto, o en cualquier punto intermedio que él elija.
+- Cuando Pipe lo pida, el agente propone qué entra al commit y con qué mensaje **antes** de correr `git commit`, y espera confirmación.
+- Si el working tree acumulado empieza a mezclar cambios de varios niveles, el agente puede *sugerir* commitear para separar el historial — sugerir, no hacerlo.
