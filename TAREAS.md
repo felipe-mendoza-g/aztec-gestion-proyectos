@@ -32,7 +32,7 @@
 
 ## Nivel 1 — Base de datos (Supabase)
 
-### Tarea 1.1: Esquema de tablas — **Estatus: pendiente**
+### Tarea 1.1: Esquema de tablas — **Estatus: hecha**
 **Archivos:**
 - Crear: `supabase/migrations/001_tables.sql`
 
@@ -43,11 +43,21 @@
 **Cómo verificar que quedó bien:**
 - Correr la migración en Supabase, confirmar en el editor de tablas que las 5 tablas existen con las columnas exactas de abajo
 
-- [ ] 1.1.a Tabla `projects`: `project_code` (text, PK), `engagement_type` (text), `client_alias` (text), `project_name` (text), `project_type_api` (text), `stage` (text, valores: Borrador/Descubrimiento/Ejecución/Cierre), `status` (text, valores: Activo/Cerrado), `health` (text, valores: Bloqueado/En riesgo/Sano), `owner_alias` (text), `owner_role` (text), `start_date` (date, nullable), `target_date` (date, nullable), `business_value` (numeric, nullable), `currency` (text), `business_value_usd` (numeric, nullable), `open_tasks` (integer, default 0), `overdue_tasks` (integer, default 0), `next_step` (text, nullable), `blocker_reason` (text, nullable), `blocked_since` (date, nullable), `blocker_owner` (text, nullable), `score_proyecto` (numeric, default 0), `summary` (text, nullable)
-- [ ] 1.1.b Tabla `tasks`: `task_code` (text, PK), `project_code` (text, FK a `projects.project_code`), `assignee_alias` (text), `assignee_role` (text), `priority` (text, valores: Baja/Media/Alta/Crítica), `status` (text, **valores: Por hacer/En progreso/En revisión/Bloqueada/Finalizada**, 5 valores — el dataset original solo usa los primeros 4, `Finalizada` es un valor nuevo que el sistema necesita, ver `APRENDIZAJES.md` #2), `due_date` (date), `is_overdue` (boolean), `title` (text), `detail` (text, nullable), `depends_on_task_code` (text, nullable, FK a `tasks.task_code`)
-- [ ] 1.1.c Tabla `notes`: `id` (uuid, PK, default `gen_random_uuid()`), `project_code` (text, FK), `content` (text), `created_at` (timestamptz, default `now()`)
-- [ ] 1.1.d Tablas `project_history` (`id` uuid PK, `project_code` text FK, `campo` text, `valor_anterior` text, `valor_nuevo` text, `changed_at` timestamptz default `now()`) y `task_history` (mismo patrón con `task_code`)
-- [ ] 1.1.e Verificar: insertar fila de prueba en `tasks` con `project_code` inexistente, confirmar que la FK lo rechaza
+- [x] 1.1.a Tabla `projects`: `project_code` (text, PK), `engagement_type` (text), `client_alias` (text), `project_name` (text), `project_type_api` (text), `stage` (text, valores: Borrador/Descubrimiento/Ejecución/Cierre), `status` (text, valores: Activo/Cerrado), `health` (text, valores: Bloqueado/En riesgo/Sano), `owner_alias` (text), `owner_role` (text), `start_date` (date, nullable), `target_date` (date, nullable), `business_value` (numeric, nullable), `currency` (text), `business_value_usd` (numeric, nullable), `open_tasks` (integer, default 0), `overdue_tasks` (integer, default 0), `next_step` (text, nullable), `blocker_reason` (text, nullable), `blocked_since` (date, nullable), `blocker_owner` (text, nullable), `score_proyecto` (numeric, default 0), `summary` (text, nullable)
+- [x] 1.1.b Tabla `tasks`: `task_code` (text, PK), `project_code` (text, FK a `projects.project_code`), `assignee_alias` (text), `assignee_role` (text), `priority` (text, valores: Baja/Media/Alta/Crítica), `status` (text, **valores: Por hacer/En progreso/En revisión/Bloqueada/Finalizada**, 5 valores — el dataset original solo usa los primeros 4, `Finalizada` es un valor nuevo que el sistema necesita, ver `APRENDIZAJES.md` #2), `due_date` (date), `is_overdue` (boolean), `title` (text), `detail` (text, nullable), `depends_on_task_code` (text, nullable, FK a `tasks.task_code`)
+- [x] 1.1.c Tabla `notes`: `id` (uuid, PK, default `gen_random_uuid()`), `project_code` (text, FK), `content` (text), `created_at` (timestamptz, default `now()`)
+- [x] 1.1.d Tablas `project_history` (`id` uuid PK, `project_code` text FK, `campo` text, `valor_anterior` text, `valor_nuevo` text, `changed_at` timestamptz default `now()`) y `task_history` (mismo patrón con `task_code`)
+- [x] 1.1.e Verificar: insertar fila de prueba en `tasks` con `project_code` inexistente, confirmar que la FK lo rechaza
+
+**Resultado de la verificación** (migración `001_tables` aplicada al proyecto `jaflglivhurdhccjvfac`, 12/12 aserciones en OK):
+- Conteo de columnas real, leído de `information_schema`: `projects` 23 · `tasks` 11 · `notes` 4 · `project_history` 6 · `task_history` 6
+- 1.1.e cumplido: `foreign_key_violation` al insertar `tasks` con `project_code` inexistente
+- Extras verificados: FK autorreferente de `depends_on_task_code` rechaza códigos inexistentes · los `CHECK` rechazan `stage='Ejecucion'` sin tilde y `health='Regular'` · aceptan `Ejecución`, `Crítica`, `En revisión` y `Finalizada` · defaults `open_tasks=0`, `overdue_tasks=0`, `score_proyecto=0`, `is_overdue=false` · `NOT NULL` rechaza `engagement_type` nulo · `gen_random_uuid()` genera id en `notes` e historial
+- Base dejada en 0 filas, sin funciones de prueba residuales
+
+**Desviaciones respecto a 1.1.a, decididas con Pipe:**
+- `currency` quedó **nullable** aunque 1.1.a no la marca así (ver `APRENDIZAJES.md` #6)
+- Se agregaron `CHECK` a `stage`, `status`, `health`, `tasks.priority` y `tasks.status` para hacer cumplir las listas de valores que 1.1.a y 1.1.b ya declaraban, e índices en las 5 llaves foráneas (Postgres no los crea solo, y el trigger de 1.2.c consulta `tasks(project_code)` en cada escritura)
 
 ### Tarea 1.2: Trigger de recalculo de score y contadores — **Estatus: pendiente**
 **Archivos:**
@@ -115,6 +125,13 @@
 - [ ] 2.1.b Mapear los 22 proyectos a `seedProjects`. Para `health='Bloqueado'`: `blocker_reason` = texto original de la columna `blockers`; `blocked_since` y `blocker_owner` quedan `null` (el Excel no los trae, se completan manualmente después vía CRUD)
 - [ ] 2.1.c Mapear las 82 tareas a `seedTasks`, incluyendo `dependency` sin resolver todavía (se resuelve en 2.2). Nota: 6 personas distintas aparecen en `owner_alias`/`assignee_alias` del Excel (Andrea Molina, Camila Torres, Daniel Rojas, Laura Gomez, Mateo Ruiz, Santiago Vera), pero no se construye tabla `Team` (alcance futuro, Fase 4). Inconsistencia conocida: la hoja `Team` del Excel solo lista 5 de esas 6 personas (falta Andrea Molina); no bloquea el seed, se deja como anotación
 - [ ] 2.1.d Calcular `business_value_usd` con `lib/currency.ts` (Tarea 3.4)
+- [ ] 2.1.e **Normalizar tildes** al insertar. El Excel viene sin acentos y los `CHECK` de la Tarea 1.1 exigen la grafía correcta (verificado: rechazan `'Ejecucion'`). Mapeos: `Ejecucion`→`Ejecución`, `Critica`→`Crítica`, `En revision`→`En revisión`, `Automatizacion`→`Automatización`, `Consultoria`→`Consultoría`, `Diagnostico`→`Diagnóstico`. Los `summary` también vienen sin tildes; se corrigen porque son texto visible en la UI
+- [ ] 2.1.f **Convertir tipos.** El Excel entrega todo como texto: `is_overdue` viene `'Si'`/`'No'` → `boolean` (34 `Si`, 48 `No`); `business_value`, `open_tasks` y `overdue_tasks` vienen como strings → `numeric`/`integer`
+- [ ] 2.1.g **Guardar `title` corto**, sin el sufijo `" - {project_name}"` (decisión fijada; el nombre del proyecto ya vive en `projects.project_name` y se obtiene por join, repetirlo en cada tarjeta del Kanban es ruido)
+- [ ] 2.1.h **No sembrar `open_tasks` ni `overdue_tasks` desde el Excel.** Son derivados y los mantiene el trigger de 1.2.c. Medido: en 6 de 22 proyectos (PRJ-03, 06, 09, 12, 15, 16) el Excel dice `overdue=1` pero el recuento real de sus tareas da `2`. Sembrar el Excel metería datos falsos que el trigger igual sobrescribiría
+- [ ] 2.1.i **Columnas del Excel que se descartan**, con la razón: `last_progress` (duplicado exacto de `detail` en 82/82 filas, verificado), `recent_completed_examples` (referencia códigos `TUE-`/`GRQ-`/`ALC-` que no existen en la hoja `Tasks`, no se puede vincular a nada), y `engagement_type`/`client_alias`/`project_name` de la hoja `Tasks` (denormalizadas, se obtienen por join)
+- [ ] 2.1.j `next_step` queda `null` en los 22 **a propósito**, no es un hueco: la hoja `Notas` del Excel dice que el candidato debe "proponer siguientes pasos", así que llenarlo es trabajo del usuario vía la Tarea 6.3. Consecuencia esperada: los 13 proyectos `Bloqueado` arrancan mostrando ⚠️
+- [ ] 2.1.k `blocker_reason` se llena en los **17** proyectos que traen texto en `blockers`, no solo en los 13 con `health='Bloqueado'`. Cuatro proyectos `En riesgo` (PRJ-13 a PRJ-16) traen blocker; no genera efecto visual porque el banner de 5.3.c solo aparece si `health='Bloqueado'`
 
 ### Tarea 2.2: Resolver `depends_on_task_code` — **Estatus: pendiente**
 **Archivos:**
@@ -127,9 +144,14 @@
 **Cómo verificar que quedó bien:**
 - Las 61 tareas con `dependency` no vacío terminan con `depends_on_task_code` válido; las que no encuentren coincidencia exacta quedan listadas para revisión manual antes de correr el seed real
 
-- [ ] 2.2.a Para cada tarea con `dependency` no vacío, buscar dentro del mismo `project_code` una tarea cuyo `title` coincida exactamente con el texto de `dependency`
+> **Corrección de la regla original** (medida contra el dataset real, ver `APRENDIZAJES.md` #7): la 2.2.a decía comparar `dependency` contra `title` tal cual. Aplicada así resuelve **0 de 61**, porque los 82 `title` del Excel traen `" - {project_name}"` pegado al final:
+> `title = 'Plan next delivery iteration - Global Contract Management'` vs `dependency = 'Plan next delivery iteration'`.
+> Quitando ese sufijo antes de comparar resuelve **61 de 61**, que es justo el número que exige el criterio de arriba. Los 82 títulos traen el sufijo, así que la regla corregida no tiene excepciones.
+
+- [ ] 2.2.a Para cada tarea con `dependency` no vacío, buscar dentro del mismo `project_code` una tarea cuyo `title` **sin el sufijo `" - {project_name}"`** coincida exactamente con el texto de `dependency`
 - [ ] 2.2.b Si hay coincidencia: asignar `depends_on_task_code`
 - [ ] 2.2.c Si no hay coincidencia exacta: no asumir una parcial, marcar para revisión manual
+- [ ] 2.2.d Verificar que ninguna tarea quede dependiendo de sí misma (medido: 0 autorreferencias en el dataset actual)
 
 ---
 
